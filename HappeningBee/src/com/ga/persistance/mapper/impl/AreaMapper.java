@@ -7,11 +7,13 @@ import org.hibernate.Query;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Repository;
 
 import com.ga.persistance.entity.Area;
 import com.ga.persistance.entity.CommentHistory;
 import com.ga.persistance.mapper.IAreaMapper;
 
+@Repository
 public class AreaMapper implements IAreaMapper {
 
 	@Autowired

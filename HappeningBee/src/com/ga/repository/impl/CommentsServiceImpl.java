@@ -1,6 +1,11 @@
 package com.ga.repository.impl;
 
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -8,6 +13,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.commons.CommonsMultipartFile;
 
 import com.ga.domain.model.CommentDTO;
 import com.ga.exception.ErrorCodes;
@@ -26,7 +32,7 @@ import com.ga.repository.ICommentsService;
 public class CommentsServiceImpl implements ICommentsService {
 
     /** The Constant LOGGER. */
-    private static final Logger LOGGER = LoggerFactory.getLogger(UserServiceImpl.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(CommentsServiceImpl.class);
 
     /** The comments mapper. */
     @Autowired
@@ -35,10 +41,10 @@ public class CommentsServiceImpl implements ICommentsService {
     /*
      * (non-Javadoc)
      * 
-     * @see com.ga.repository.ICommentsService#uploadFile(java.lang.String, java.lang.String, java.lang.String)
+     * @see com.ga.repository.ICommentsService#addComments(java.lang.String, java.lang.String, java.lang.String)
      */
     @Override
-    public boolean uploadFile(String filePath, String comments, String userID) throws GAException {
+    public boolean addComments(String filePath, String comments, String userID) throws GAException {
         LOGGER.info("Upload file called!!");
         boolean result = commentsMapper.uploadFile(filePath, comments, userID);
 
@@ -47,7 +53,7 @@ public class CommentsServiceImpl implements ICommentsService {
             return true;
         } else {
             LOGGER.info("File upload error");
-            return false;
+            throw new GAException(ErrorCodes.GA_INTERNAL);
         }
     }
 
@@ -62,20 +68,21 @@ public class CommentsServiceImpl implements ICommentsService {
         List<CommentHistory> commentHistoryList = commentsMapper.getCommentsList(userID);
         List<CommentDTO> commentsDtoList = new ArrayList<CommentDTO>();
 
+        // get data from database and store with list object.
         if (commentHistoryList.isEmpty()) {
-            throw new GAException(ErrorCodes.GA_FILE_UPLOAD);
+            throw new GAException(ErrorCodes.GA_INTERNAL);
         }
 
         for (CommentHistory commentHistory : commentHistoryList) {
             commentsDtoList.add(convertEntityToDTO(commentHistory));
         }
-
-        if (commentHistoryList.isEmpty()) {
-            throw new GAException(ErrorCodes.GA_FILE_UPLOAD);
+        // convert into dto and return to controller
+        if (commentsDtoList.isEmpty()) {
+            throw new GAException(ErrorCodes.GA_INTERNAL);
         } else {
+            LOGGER.info("CommentsDtoList : " + commentsDtoList.toString());
             return commentsDtoList;
         }
-
     }
 
     /*
@@ -108,8 +115,90 @@ public class CommentsServiceImpl implements ICommentsService {
         commentDto.setCommentId(commentHistory.getCommentId());
         commentDto.setCommentsDetail(commentHistory.getCommentsDetail());
         commentDto.setFilepath(commentHistory.getFilepath());
-
         return commentDto;
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see
+     * com.ga.repository.ICommentsService#uploadFile(org.springframework.web.multipart.commons.CommonsMultipartFile)
+     */
+    @Override
+    public String uploadFile(CommonsMultipartFile file) throws GAException {
+        LOGGER.info("Upload file called!!");
+        String fileName;
+        try {
+            fileName = checkIsFile(file);
+            if (fileName.isEmpty()) {
+                LOGGER.info("File is empty!!");
+                throw new GAException(ErrorCodes.GA_FILE_UPLOAD);
+            }
+            LOGGER.info(String.format("Upload file complete!! File path : %s", fileName));
+            return fileName;
+        } catch (IllegalStateException e) {
+            LOGGER.info("Exception : " + e.getMessage());
+            LOGGER.info("stack trace :  " + e);
+            throw new GAException(ErrorCodes.GA_DATA_NOT_FOUND);
+        }
+    }
+
+    /**
+     * Check is file.
+     *
+     * @param file the file
+     * @return the string
+     * @throws GAException the GA exception
+     */
+    private String checkIsFile(CommonsMultipartFile file) throws GAException {
+        LOGGER.info("Checkfile is called!!");
+        try {
+            if (!file.isEmpty()) {
+                LOGGER.info("checkIsFile return true:");
+                byte[] bytes = file.getBytes();
+                Long f = new Date().getTime();
+
+                File newFile = new File("/var/lib/tomcat7/webapps/ROOT/comments/" + f + ".jpg");
+
+                BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(new FileOutputStream(newFile));
+                LOGGER.info("newFile :" + newFile);
+
+                bufferedOutputStream.write(bytes);
+                bufferedOutputStream.close();
+                LOGGER.info("return file :" + newFile.getName());
+                return newFile.getName();
+
+            } else {
+                LOGGER.info("checkIsFile return false:");
+                throw new GAException(ErrorCodes.GA_DATA_NOT_FOUND);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            throw new GAException(ErrorCodes.GA_DATA_NOT_FOUND);
+        }
+    }
+    
+    @Override
+    public List<CommentDTO> getCommentsListByAreaId(String areaID) throws GAException {
+        LOGGER.info("Get commemts list by area called!!");
+        List<CommentHistory> commentHistoryList = commentsMapper.getCommentByAreaID(areaID);
+        List<CommentDTO> commentsDtoList = new ArrayList<CommentDTO>();
+
+        // get data from database and store with list object.
+        if (commentHistoryList.isEmpty()) {
+            throw new GAException(ErrorCodes.GA_INTERNAL);
+        }
+
+        for (CommentHistory commentHistory : commentHistoryList) {
+            commentsDtoList.add(convertEntityToDTO(commentHistory));
+        }
+        // convert into dto and return to controller
+        if (commentsDtoList.isEmpty()) {
+            throw new GAException(ErrorCodes.GA_INTERNAL);
+        } else {
+            LOGGER.info("CommentsDtoList : " + commentsDtoList.toString());
+            return commentsDtoList;
+        }
     }
 
 }

@@ -13,10 +13,10 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.ga.common.JsonUtility;
-import com.ga.domain.model.CommentDTO;
 import com.ga.exception.ErrorCodes;
 import com.ga.exception.GAException;
 import com.ga.repository.IAreaService;
+import com.ga.repository.impl.AreaServiceImpl;
 
 @RestController
 @RequestMapping("/area")
@@ -31,7 +31,7 @@ public class AreaController {
     
     @RequestMapping(value = "getarea", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
-    public String getAllComments(@RequestParam("areaName") String areaName) {
+    public List<String> getAllComments(@RequestParam("areaName") String areaName) {
         LOGGER.info("AreaName : " + areaName);
         try {
             if (areaName.isEmpty()) {
@@ -39,11 +39,15 @@ public class AreaController {
             }
 
             List<String> commentsDtoList = areaService.getAreaByName(areaName);
-            return JsonUtility.getJson(ErrorCodes.GA_TRANSACTION_OK, commentsDtoList);
+            System.out.println(commentsDtoList);
+            //return JsonUtility.getJson(ErrorCodes.GA_TRANSACTION_OK, commentsDtoList);
+            return commentsDtoList;
         } catch (GAException e) {
             e.printStackTrace();
-            return JsonUtility.getJson(ErrorCodes.GA_DATA_NOT_FOUND);
+            //return JsonUtility.getJson(ErrorCodes.GA_DATA_NOT_FOUND);
+            return null;
         }
+       // return commentsDtoList;
     }
 
 

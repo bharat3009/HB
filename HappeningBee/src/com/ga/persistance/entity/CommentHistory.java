@@ -55,8 +55,20 @@ public class CommentHistory implements Serializable {
     @JoinColumn(name = "user_id", referencedColumnName = "user_id")
     @ManyToOne
     private UserDetail userId;
+    
+    @JoinColumn(name="area_id", referencedColumnName = "AreaId")
+    @ManyToOne
+    private Area areaId;
 
-    public CommentHistory() {
+    public Area getAreaId() {
+		return areaId;
+	}
+
+	public void setAreaId(Area areaId) {
+		this.areaId = areaId;
+	}
+
+	public CommentHistory() {
     }
 
     public CommentHistory(Integer commentId) {
@@ -124,4 +136,9 @@ public class CommentHistory implements Serializable {
         return true;
     }
 
+    @Override
+    public String toString() {
+        return "CommentHistory [commentId=" + commentId + ", filepath=" + filepath + ", commentDate=" + commentDate
+                + "]";
+    }
 }

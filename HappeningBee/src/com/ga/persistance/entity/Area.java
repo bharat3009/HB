@@ -52,6 +52,14 @@ public class Area implements Serializable {
 	    @Column(name = "state")
 	    @Expose
 	    private String state;
+	    
+	    public Area(){
+	    	
+	    }
+	    
+	    public Area(String areaId){
+	    	this.areaId = areaId;
+	    }
 
 		public String getAreaId() {
 			return areaId;

@@ -104,4 +104,8 @@ public class UserDetail implements Serializable {
         return true;
     }
 
+    @Override
+    public String toString() {
+        return "UserDetail [userId=" + userId + ", userName=" + userName + "]";
+    }
 }
